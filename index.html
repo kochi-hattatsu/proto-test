@@ -12,6 +12,7 @@ pre{background:#f3f3f3;padding:12px;white-space:pre-wrap;word-break:break-all;fo
 </style>
 </head>
 <body>
+<div id="lineWarn" style="display:none;background:#fff3cd;padding:12px;margin-bottom:12px">LINEの中ではログインできません。右下のメニュー(︙)から「他のブラウザで開く」を押してください。</div>
 <h1>試作ページ</h1>
 <p class="note">ダミーの確認用です。個人情報・本番データはありません。</p>
 
@@ -27,6 +28,11 @@ pre{background:#f3f3f3;padding:12px;white-space:pre-wrap;word-break:break-all;fo
 <h2>③ このブラウザ</h2>
 <pre id="uaOut"></pre>
 
+<h2>④ 管理者だけ: 保存テスト</h2>
+<p class="note">ログイン後に押します。GitHub に ダミーの data/test.json を保存します。</p>
+<button id="save">保存テスト</button>
+<pre id="saveOut">(未実行)</pre>
+
 <script src="config.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
@@ -36,12 +42,22 @@ function callGas(body) {
     .then(function (r) { return r.json(); });
 }
 document.getElementById('uaOut').textContent = navigator.userAgent;
+if (/\bLine\//i.test(navigator.userAgent)) document.getElementById('lineWarn').style.display = 'block';
 document.getElementById('ping').onclick = function () {
   var o = document.getElementById('pingOut'); o.textContent = '送信中…';
   callGas({ action: 'ping' }).then(function (j) { o.textContent = '成功: ' + JSON.stringify(j); })
     .catch(function (e) { o.textContent = '失敗: ' + e; });
 };
+var lastCred = '';
+document.getElementById('save').onclick = function () {
+  var o = document.getElementById('saveOut');
+  if (!lastCred) { o.textContent = '先に②でログインしてください'; return; }
+  o.textContent = '送信中…';
+  callGas({ action: 'savetest', idToken: lastCred }).then(function (j) { o.textContent = JSON.stringify(j, null, 1); })
+    .catch(function (e) { o.textContent = '失敗: ' + e; });
+};
 function onCred(resp) {
+  lastCred = resp.credential;
   var o = document.getElementById('loginOut'); o.textContent = '確認中…';
   callGas({ action: 'whoami', idToken: resp.credential }).then(function (j) { o.textContent = JSON.stringify(j, null, 1); })
     .catch(function (e) { o.textContent = '失敗: ' + e; });
