@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>試作(ダミー・あとで削除)</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;padding:16px;line-height:1.7;font-size:18px}
+button{font-size:18px;padding:10px 16px;margin:4px 0}
+pre{background:#f3f3f3;padding:12px;white-space:pre-wrap;word-break:break-all;font-size:15px}
+.note{color:#555;font-size:15px}
+</style>
+</head>
+<body>
+<h1>試作ページ</h1>
+<p class="note">ダミーの確認用です。個人情報・本番データはありません。</p>
+
+<h2>① つながるか</h2>
+<button id="ping">つながるか試す</button>
+<pre id="pingOut">(未実行)</pre>
+
+<h2>② Googleでログイン</h2>
+<div id="g_id_onload" data-client_id="745816293815-6oj97mv6f805om5p1f8p7kg3dt3n0o9u.apps.googleusercontent.com" data-callback="onCred" data-auto_prompt="false"></div>
+<div class="g_id_signin" data-type="standard" data-size="large" data-text="signin_with" data-locale="ja"></div>
+<pre id="loginOut">(未ログイン)</pre>
+
+<h2>③ このブラウザ</h2>
+<pre id="uaOut"></pre>
+
+<script src="config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// GASへは「text/plain」で送る(事前確認が要らない単純なリクエストにするため)
+function callGas(body) {
+  return fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+    .then(function (r) { return r.json(); });
+}
+document.getElementById('uaOut').textContent = navigator.userAgent;
+document.getElementById('ping').onclick = function () {
+  var o = document.getElementById('pingOut'); o.textContent = '送信中…';
+  callGas({ action: 'ping' }).then(function (j) { o.textContent = '成功: ' + JSON.stringify(j); })
+    .catch(function (e) { o.textContent = '失敗: ' + e; });
+};
+function onCred(resp) {
+  var o = document.getElementById('loginOut'); o.textContent = '確認中…';
+  callGas({ action: 'whoami', idToken: resp.credential }).then(function (j) { o.textContent = JSON.stringify(j, null, 1); })
+    .catch(function (e) { o.textContent = '失敗: ' + e; });
+}
+</script>
+</body>
+</html>
